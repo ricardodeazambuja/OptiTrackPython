@@ -33,7 +33,7 @@ class TestOptiTrackPythonClient(object):
                 for key in self.optitrack_reading:
                     print("Received frame for rigid body {}:\n position: {}\n rotation: {}".format(key,
                                                                                                    self.optitrack_reading[key][0],
-                                                                                                   self.optitrack_reading[key][0]))
+                                                                                                   self.optitrack_reading[key][1]))
                 time.sleep(0.005)
             except KeyboardInterrupt:
                 self.streamingClient.is_alive = False

@@ -6,6 +6,19 @@ import time
 
 VERBOSE = False
 
+MAX_MARKERCOUNT = 100
+MAX_MARKERSETCOUNT = 100
+MAX_LABELEDMARKERSCOUNT = 100
+MAX_UNLABELEDMARKERSCOUNT = 100
+MAX_RIGIDBODYCOUNT = 100
+MAX_SKELETONCOUNT = 100
+MAX_FORCEPLATECOUNT = 100
+MAX_FORCEPLATECHANNELCOUNT = 100
+MAX_FORCEPLATECHANNELFRAMECOUNT = 100
+MAX_DEVICECOUNT = 100
+MAX_DEVICECHANNELCOUNT = 100
+MAX_DEVICECHANNELFRAMECOUNT = 100
+
 # Create structs for reading various object types to speed up parsing.
 Vector3 = struct.Struct('<fff')
 Quaternion = struct.Struct('<ffff')
@@ -65,6 +78,7 @@ class OptiTrackPythonClient:
     NAT_DISCONNECT = 9
     NAT_UNRECOGNIZED_REQUEST = 100
 
+
     # Create a data socket to attach to the NatNet stream
     def __createDataSocket(self, port, client_ip=None):
         result = socket.socket(socket.AF_INET,  # Internet
@@ -107,28 +121,25 @@ class OptiTrackPythonClient:
         offset=0
 
         # ID (4 bytes)
-        id =from_bytes(data[offset:offset + 4], byteorder ='little')
-        trace("ID:", id)
+        RBid=from_bytes(data[offset:offset + 4], byteorder ='little')
+        trace("ID:", RBid)
         offset += 4
 
         # Position and orientation
-        pos=Vector3.unpack(data[offset:offset + 12])
+        RBpos=Vector3.unpack(data[offset:offset + 12])
         offset += 12
 
-        trace("\tPosition:", pos[0], ",", pos[1], ",", pos[2])
-        rot=Quaternion.unpack(data[offset:offset + 16])
+        trace("\tPosition:", RBpos[0], ",", RBpos[1], ",", RBpos[2])
+        RBrot=Quaternion.unpack(data[offset:offset + 16])
         offset += 16
-        trace("\tOrientation:", rot[0], ",", rot[1], ",", rot[2], ",", rot[3])
-
-        # Send information to any listener.
-        if self.rigidBodyListener is not None:
-            self.rigidBodyListener(id, pos, rot, self.rigidBodyDescriptor)
-            trace("Sending info to rigidBodyListener")
+        trace("\tOrientation:", RBrot[0], ",", RBrot[1], ",", RBrot[2], ",", RBrot[3])
 
         # RB Marker Data ( Before version 3.0.  After Version 3.0 Marker data is in description )
         if( self.__natNetStreamVersion[0] < 3  and self.__natNetStreamVersion[0] != 0) :
             # Marker count (4 bytes)
             markerCount = from_bytes( data[offset:offset+4], byteorder='little' )
+            if markerCount > MAX_MARKERCOUNT or markerCount<0:
+                return None
             offset += 4
             markerCountRange = range( 0, markerCount )
             trace( "\tMarker Count:", markerCount )
@@ -157,12 +168,18 @@ class OptiTrackPythonClient:
             offset += 4
             trace( "\tMarker Error:", markerError )
 
+        trackingValid = None
         # Version 2.6 and later
         if( ( ( self.__natNetStreamVersion[0] == 2 ) and ( self.__natNetStreamVersion[1] >= 6 ) ) or self.__natNetStreamVersion[0] > 2 or self.__natNetStreamVersion[0] == 0 ):
             param, = struct.unpack( 'h', data[offset:offset+2] )
             trackingValid = ( param & 0x01 ) != 0
             offset += 2
             trace( "\tTracking Valid:", 'True' if trackingValid else 'False' )
+
+        # Send information to any listener.
+        if (self.rigidBodyListener is not None) and trackingValid:
+            self.rigidBodyListener(RBid, RBpos, RBrot, self.rigidBodyDescriptor)
+            trace("Sending info to rigidBodyListener")
 
         return offset
 
@@ -175,10 +192,15 @@ class OptiTrackPythonClient:
         trace( "ID:", id )
         
         rigidBodyCount = from_bytes( data[offset:offset+4], byteorder='little' )
+        if rigidBodyCount>MAX_RIGIDBODYCOUNT or rigidBodyCount<0:
+            return None
         offset += 4
         trace( "Rigid Body Count:", rigidBodyCount )
         for j in range( 0, rigidBodyCount ):
-            offset += self.__unpackRigidBody( data[offset:] )
+            recv_offset = self.__unpackRigidBody( data[offset:] )
+            if recv_offset==None:
+                return None
+            offset += recv_offset
 
         return offset
 
@@ -196,6 +218,8 @@ class OptiTrackPythonClient:
 
         # Marker set count (4 bytes)
         markerSetCount = from_bytes( data[offset:offset+4], byteorder='little' )
+        if markerSetCount>MAX_MARKERSETCOUNT or markerSetCount<0:
+            return None
         offset += 4
         trace( "Marker Set Count:", markerSetCount )
 
@@ -207,6 +231,8 @@ class OptiTrackPythonClient:
 
             # Marker count (4 bytes)
             markerCount = from_bytes( data[offset:offset+4], byteorder='little' )
+            if markerCount>MAX_MARKERCOUNT or markerCount<0:
+                return None
             offset += 4
             trace( "Marker Count:", markerCount )
 
@@ -217,6 +243,8 @@ class OptiTrackPythonClient:
                          
         # Unlabeled markers count (4 bytes)
         unlabeledMarkersCount = from_bytes( data[offset:offset+4], byteorder='little' )
+        if unlabeledMarkersCount>MAX_UNLABELEDMARKERSCOUNT or unlabeledMarkersCount<0:
+            return None
         offset += 4
         trace( "Unlabeled Markers Count:", unlabeledMarkersCount )
 
@@ -227,6 +255,8 @@ class OptiTrackPythonClient:
 
         # Rigid body count (4 bytes)
         rigidBodyCount = from_bytes( data[offset:offset+4], byteorder='little' )
+        if rigidBodyCount>MAX_RIGIDBODYCOUNT or rigidBodyCount<0:
+            return None
         offset += 4
         trace( "Rigid Body Count:", rigidBodyCount )
          
@@ -237,15 +267,22 @@ class OptiTrackPythonClient:
         skeletonCount = 0
         if( ( self.__natNetStreamVersion[0] == 2 and self.__natNetStreamVersion[1] > 0 ) or self.__natNetStreamVersion[0] > 2 ):
             skeletonCount = from_bytes( data[offset:offset+4], byteorder='little' )
+            if skeletonCount>MAX_SKELETONCOUNT or skeletonCount<0:
+                return None
             offset += 4
             trace( "Skeleton Count:", skeletonCount )
             for i in range( 0, skeletonCount ):
+                recv_offset = self.__unpackSkeleton( data[offset:] )
+                if recv_offset==None:
+                    return None
                 offset += self.__unpackSkeleton( data[offset:] )
 
         # Labeled markers (Version 2.3 and later)
         labeledMarkerCount = 0
         if( ( self.__natNetStreamVersion[0] == 2 and self.__natNetStreamVersion[1] > 3 ) or self.__natNetStreamVersion[0] > 2 ):
             labeledMarkerCount = from_bytes( data[offset:offset+4], byteorder='little' )
+            if labeledMarkerCount>MAX_LABELEDMARKERSCOUNT or labeledMarkerCount<0:
+                return None
             offset += 4
             trace( "Labeled Marker Count:", labeledMarkerCount )
             for i in range( 0, labeledMarkerCount ):
@@ -273,6 +310,8 @@ class OptiTrackPythonClient:
         # Force Plate data (version 2.9 and later)
         if( ( self.__natNetStreamVersion[0] == 2 and self.__natNetStreamVersion[1] >= 9 ) or self.__natNetStreamVersion[0] > 2 ):
             forcePlateCount = from_bytes( data[offset:offset+4], byteorder='little' )
+            if forcePlateCount>MAX_FORCEPLATECOUNT or forcePlateCount<0:
+                return None
             offset += 4
             trace( "Force Plate Count:", forcePlateCount )
             for i in range( 0, forcePlateCount ):
@@ -283,12 +322,16 @@ class OptiTrackPythonClient:
 
                 # Channel Count
                 forcePlateChannelCount = from_bytes( data[offset:offset+4], byteorder='little' )
+                if forcePlateChannelCount>MAX_FORCEPLATECHANNELCOUNT or forcePlateChannelCount<0:
+                    return None
                 offset += 4
 
                 # Channel Data
                 for j in range( 0, forcePlateChannelCount ):
                     trace( "\tChannel", j, ":", forcePlateID )
                     forcePlateChannelFrameCount = from_bytes( data[offset:offset+4], byteorder='little' )
+                    if forcePlateChannelFrameCount>MAX_FORCEPLATECHANNELFRAMECOUNT or forcePlateChannelFrameCount<0:
+                        return None
                     offset += 4
                     for k in range( 0, forcePlateChannelFrameCount ):
                         forcePlateChannelVal = from_bytes( data[offset:offset+4], byteorder='little' )
@@ -298,6 +341,8 @@ class OptiTrackPythonClient:
         # Device data (version 2.11 and later)
         if( ( self.__natNetStreamVersion[0] == 2 and self.__natNetStreamVersion[1] >= 11 ) or self.__natNetStreamVersion[0] > 2 ):
             deviceCount = from_bytes( data[offset:offset+4], byteorder='little' )
+            if deviceCount>MAX_DEVICECOUNT or deviceCount<0:
+                return None
             offset += 4
             trace( "Device Count:", deviceCount )
             for i in range( 0, deviceCount ):
@@ -308,12 +353,15 @@ class OptiTrackPythonClient:
 
                 # Channel Count
                 deviceChannelCount = from_bytes( data[offset:offset+4], byteorder='little' )
+                if deviceChannelCount>MAX_DEVICECHANNELCOUNT or deviceChannelCount<0:
+                    return None
                 offset += 4
-
                 # Channel Data
                 for j in range( 0, deviceChannelCount ):
                     trace( "\tChannel", j, ":", deviceID )
                     deviceChannelFrameCount = from_bytes( data[offset:offset+4], byteorder='little' )
+                    if deviceChannelFrameCount>MAX_DEVICECHANNELFRAMECOUNT or deviceChannelFrameCount<0:
+                        return None
                     offset += 4
                     for k in range( 0, deviceChannelFrameCount ):
                         deviceChannelVal = from_bytes( data[offset:offset+4], byteorder='little' )
@@ -366,6 +414,8 @@ class OptiTrackPythonClient:
 
         markerCount=from_bytes(
             data[offset:offset + 4], byteorder='little')
+        if markerCount > MAX_MARKERCOUNT or markerCount<0:
+            return None
         offset += 4
 
         for i in range(0, markerCount):
