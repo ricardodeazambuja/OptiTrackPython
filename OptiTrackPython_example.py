@@ -8,7 +8,7 @@ class TestNatNetClient(object):
                  client_ip='192.168.2.101',
                  server_ip="192.168.2.100",
                  multicast_address="239.255.42.99",
-                 rigidbody_names2track=["Solo1"]):
+                 rigidbody_names2track=["CogniFly"]):
 
         self.rigidbody_names2track = rigidbody_names2track
 
