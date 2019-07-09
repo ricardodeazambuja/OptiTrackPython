@@ -719,6 +719,7 @@ class NatNetClient(object):
 
 if __name__ == '__main__':
     import argparse
+    import pickle
 
     parser = argparse.ArgumentParser(description="Test the OptiTrack system!")
     
@@ -732,6 +733,8 @@ if __name__ == '__main__':
 
     parser.add_argument("--verbose", help="Print all internal messages.", action="store_true")
 
+    parser.add_argument("--record2file", help="Record rigidbody data to a file (dictionary using pickle).", action="store_true")
+
     args=parser.parse_args() # processes everything
 
     VERBOSE = args.verbose
@@ -744,6 +747,10 @@ if __name__ == '__main__':
 
     multicast_address = args.multicast_address
 
+    record2file = args.record2file
+    if record2file and rigidbodyname:
+        data = []
+
     # This is a callback function that gets connected to the NatNet client. It is called once per rigid body per frame
     def receiveRigidBodyFrame(timestamp, id, position, rotation, rigidBodyDescriptor):
         if rigidBodyDescriptor:
@@ -751,6 +758,9 @@ if __name__ == '__main__':
                 if id == rigidBodyDescriptor[rigidbodyname][0]:
                     print("[{}] Received frame for rigid body {}:\n id: {} \n position: {}\n quaternion: {}\n rpy: {}".format(rigidbodyname,
                         timestamp, id, position, rotation, from_quaternion2rpy(rotation)))
+                    if record2file and rigidbodyname:
+                        data.append([timestamp, id, position, rotation, from_quaternion2rpy(rotation)])
+
 
     # This will create a new NatNet client
     streamingClient=NatNetClient(client_ip=local_ip, server_ip=server_ip, multicast_address=multicast_address)
@@ -769,6 +779,20 @@ if __name__ == '__main__':
             except KeyboardInterrupt:
                 streamingClient.is_alive=False
                 break
+    except KeyboardInterrupt:
+        pass
     finally:
-        print("Closing")
+        print("Closing the connection...")
         streamingClient.close()
+        time.sleep(1)
+        print("Connection closed!")
+        if record2file and rigidbodyname:
+            filename = "{}.pickle".format(rigidbodyname)
+            with open(filename, "wb" ) as f:
+                pickle.dump(data,f)
+            print("Data saved to {}".format(filename))
+            print("To read the data, use: data = pickle.load(open({}, 'rb'))".format(filename))
+    
+    # To read the data:
+    # with open("CogniFly.pickle", 'rb') as f: 
+    #     data = pickle.load(open("CogniFly.pickle", 'rb')) 
