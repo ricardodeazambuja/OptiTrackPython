@@ -197,7 +197,7 @@ class NatNetClient(object):
             markerCount = from_bytes( data[offset:offset+4], byteorder='little' )
             offset += 4
             if markerCount > MAX_MARKERCOUNT or markerCount<0:
-                raise unpackingError("markerCount=".format(markerCount))
+                raise unpackingError("markerCount={}".format(markerCount))
 
             markerCountRange = range( 0, markerCount )
             trace( "\tMarker Count:", markerCount )
@@ -250,7 +250,7 @@ class NatNetClient(object):
         
         rigidBodyCount = from_bytes( data[offset:offset+4], byteorder='little' )
         if rigidBodyCount>MAX_RIGIDBODYCOUNT or rigidBodyCount<0:
-            raise unpackingError("rigidBodyCount=".format(rigidBodyCount))
+            raise unpackingError("rigidBodyCount={}".format(rigidBodyCount))
         offset += 4
         trace( "Rigid Body Count:", rigidBodyCount )
         for j in range( 0, rigidBodyCount ):
@@ -273,7 +273,7 @@ class NatNetClient(object):
         # Marker set count (4 bytes)
         markerSetCount = from_bytes( data[offset:offset+4], byteorder='little' )
         if markerSetCount>MAX_MARKERSETCOUNT or markerSetCount<0:
-            raise unpackingError("markerSetCount=".format(markerSetCount))
+            raise unpackingError("markerSetCount={}".format(markerSetCount))
         offset += 4
         trace( "Marker Set Count:", markerSetCount )
 
@@ -286,7 +286,7 @@ class NatNetClient(object):
             # Marker count (4 bytes)
             markerCount = from_bytes( data[offset:offset+4], byteorder='little' )
             if markerCount>MAX_MARKERCOUNT or markerCount<0:
-                raise unpackingError("markerCount=".format(markerCount))
+                raise unpackingError("markerCount={}".format(markerCount))
             offset += 4
             trace( "Marker Count:", markerCount )
 
@@ -298,7 +298,7 @@ class NatNetClient(object):
         # Unlabeled markers count (4 bytes)
         unlabeledMarkersCount = from_bytes( data[offset:offset+4], byteorder='little' )
         if unlabeledMarkersCount>MAX_UNLABELEDMARKERSCOUNT or unlabeledMarkersCount<0:
-            raise unpackingError("unlabeledMarkersCount=".format(unlabeledMarkersCount))
+            raise unpackingError("unlabeledMarkersCount={}".format(unlabeledMarkersCount))
         offset += 4
         trace( "Unlabeled Markers Count:", unlabeledMarkersCount )
 
@@ -312,7 +312,7 @@ class NatNetClient(object):
         offset += 4
         trace( "Rigid Body Count:", rigidBodyCount )
         if rigidBodyCount>MAX_RIGIDBODYCOUNT or rigidBodyCount<0:
-            raise unpackingError("rigidBodyCount=".format(rigidBodyCount))
+            raise unpackingError("rigidBodyCount={}".format(rigidBodyCount))
          
         if rigidBodyCount>0:
             self.rigidBodyListener_buffer = {}
@@ -325,7 +325,7 @@ class NatNetClient(object):
         if( ( self.__natNetStreamVersion[0] == 2 and self.__natNetStreamVersion[1] > 0 ) or self.__natNetStreamVersion[0] > 2 ):
             skeletonCount = from_bytes( data[offset:offset+4], byteorder='little' )
             if skeletonCount>MAX_SKELETONCOUNT or skeletonCount<0:
-                raise unpackingError("skeletonCount=".format(skeletonCount))
+                raise unpackingError("skeletonCount={}".format(skeletonCount))
             offset += 4
             trace( "Skeleton Count:", skeletonCount )
             for i in range( 0, skeletonCount ):
@@ -336,7 +336,7 @@ class NatNetClient(object):
         if( ( self.__natNetStreamVersion[0] == 2 and self.__natNetStreamVersion[1] > 3 ) or self.__natNetStreamVersion[0] > 2 ):
             labeledMarkerCount = from_bytes( data[offset:offset+4], byteorder='little' )
             if labeledMarkerCount>MAX_LABELEDMARKERSCOUNT or labeledMarkerCount<0:
-                raise unpackingError("labeledMarkerCount=".format(labeledMarkerCount))
+                raise unpackingError("labeledMarkerCount={}".format(labeledMarkerCount))
             offset += 4
             trace( "Labeled Marker Count:", labeledMarkerCount )
             for i in range( 0, labeledMarkerCount ):
@@ -365,7 +365,7 @@ class NatNetClient(object):
         if( ( self.__natNetStreamVersion[0] == 2 and self.__natNetStreamVersion[1] >= 9 ) or self.__natNetStreamVersion[0] > 2 ):
             forcePlateCount = from_bytes( data[offset:offset+4], byteorder='little' )
             if forcePlateCount>MAX_FORCEPLATECOUNT or forcePlateCount<0:
-                raise unpackingError("forcePlateCount=".format(forcePlateCount))
+                raise unpackingError("forcePlateCount={}".format(forcePlateCount))
             offset += 4
             trace( "Force Plate Count:", forcePlateCount )
             for i in range( 0, forcePlateCount ):
@@ -377,7 +377,7 @@ class NatNetClient(object):
                 # Channel Count
                 forcePlateChannelCount = from_bytes( data[offset:offset+4], byteorder='little' )
                 if forcePlateChannelCount>MAX_FORCEPLATECHANNELCOUNT or forcePlateChannelCount<0:
-                    raise unpackingError("forcePlateChannelCount=".format(forcePlateChannelCount))
+                    raise unpackingError("forcePlateChannelCount={}".format(forcePlateChannelCount))
                 offset += 4
 
                 # Channel Data
@@ -385,7 +385,7 @@ class NatNetClient(object):
                     trace( "\tChannel", j, ":", forcePlateID )
                     forcePlateChannelFrameCount = from_bytes( data[offset:offset+4], byteorder='little' )
                     if forcePlateChannelFrameCount>MAX_FORCEPLATECHANNELFRAMECOUNT or forcePlateChannelFrameCount<0:
-                        raise unpackingError("forcePlateChannelFrameCount=".format(forcePlateChannelFrameCount))
+                        raise unpackingError("forcePlateChannelFrameCount={}".format(forcePlateChannelFrameCount))
                     offset += 4
                     for k in range( 0, forcePlateChannelFrameCount ):
                         forcePlateChannelVal = from_bytes( data[offset:offset+4], byteorder='little' )
@@ -396,7 +396,7 @@ class NatNetClient(object):
         if( ( self.__natNetStreamVersion[0] == 2 and self.__natNetStreamVersion[1] >= 11 ) or self.__natNetStreamVersion[0] > 2 ):
             deviceCount = from_bytes( data[offset:offset+4], byteorder='little' )
             if deviceCount>MAX_DEVICECOUNT or deviceCount<0:
-                raise unpackingError("deviceCount=".format(deviceCount))
+                raise unpackingError("deviceCount={}".format(deviceCount))
             offset += 4
             trace( "Device Count:", deviceCount )
             for i in range( 0, deviceCount ):
@@ -408,14 +408,14 @@ class NatNetClient(object):
                 # Channel Count
                 deviceChannelCount = from_bytes( data[offset:offset+4], byteorder='little' )
                 if deviceChannelCount>MAX_DEVICECHANNELCOUNT or deviceChannelCount<0:
-                    raise unpackingError("deviceChannelCount=".format(deviceChannelCount))
+                    raise unpackingError("deviceChannelCount={}".format(deviceChannelCount))
                 offset += 4
                 # Channel Data
                 for j in range( 0, deviceChannelCount ):
                     trace( "\tChannel", j, ":", deviceID )
                     deviceChannelFrameCount = from_bytes( data[offset:offset+4], byteorder='little' )
                     if deviceChannelFrameCount>MAX_DEVICECHANNELFRAMECOUNT or deviceChannelFrameCount<0:
-                        raise unpackingError("deviceChannelFrameCount=".format(deviceChannelFrameCount))
+                        raise unpackingError("deviceChannelFrameCount={}".format(deviceChannelFrameCount))
                     offset += 4
                     for k in range( 0, deviceChannelFrameCount ):
                         deviceChannelVal = from_bytes( data[offset:offset+4], byteorder='little' )
@@ -485,7 +485,7 @@ class NatNetClient(object):
         markerCount=from_bytes(data[offset:offset + 4], byteorder='little')
         offset += 4
         if markerCount > MAX_MARKERCOUNT or markerCount<0:
-            raise unpackingError("markerCount=".format(markerCount))
+            raise unpackingError("markerCount={}".format(markerCount))
 
         for i in range(0, markerCount):
             name, separator, remainder=bytes(data[offset:]).partition(b'\0')
@@ -718,18 +718,42 @@ class NatNetClient(object):
                            self.commandSocket, (self.server_address, self.command_port))
 
 if __name__ == '__main__':
-    VERBOSE=False
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Test the OptiTrack system!")
+    
+    parser.add_argument("local_ip", help="Enter your ip address.", type=str)
+
+    parser.add_argument("--server_ip", help="Enter the server ip address.", type=str, default="192.168.2.100")
+
+    parser.add_argument("--multicast_address", help="Enter the server ip address.", type=str, default="239.255.42.99")
+
+    parser.add_argument("--rigidbodyname", help="Rigidbody name to track.", type=str, default="CogniFly")
+
+    parser.add_argument("--verbose", help="Print all internal messages.", action="store_true")
+
+    args=parser.parse_args() # processes everything
+
+    VERBOSE = args.verbose
+
+    rigidbodyname = args.rigidbodyname
+
+    local_ip = args.local_ip
+
+    server_ip = args.server_ip
+
+    multicast_address = args.multicast_address
 
     # This is a callback function that gets connected to the NatNet client. It is called once per rigid body per frame
     def receiveRigidBodyFrame(timestamp, id, position, rotation, rigidBodyDescriptor):
         if rigidBodyDescriptor:
-            if 'Solo1' in rigidBodyDescriptor:
-                if id == rigidBodyDescriptor['Solo1'][0]:
-                    print("[{}] Received frame for rigid body Solo1:\n id: {} \n position: {}\n quaternion: {}\n rpy: {}".format(timestamp,
-                        id, position, rotation, from_quaternion2rpy(rotation)))
+            if rigidbodyname and (rigidbodyname in rigidBodyDescriptor):
+                if id == rigidBodyDescriptor[rigidbodyname][0]:
+                    print("[{}] Received frame for rigid body {}:\n id: {} \n position: {}\n quaternion: {}\n rpy: {}".format(rigidbodyname,
+                        timestamp, id, position, rotation, from_quaternion2rpy(rotation)))
 
     # This will create a new NatNet client
-    streamingClient=NatNetClient(client_ip='192.168.2.101')
+    streamingClient=NatNetClient(client_ip=local_ip, server_ip=server_ip, multicast_address=multicast_address)
 
     # Configure the streaming client to call our rigid body handler on the emulator to send data out.
     streamingClient.rigidBodyListener=receiveRigidBodyFrame
