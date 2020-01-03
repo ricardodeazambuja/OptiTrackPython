@@ -198,19 +198,23 @@ class NatNetClient(object):
             if markerCount > MAX_MARKERCOUNT or markerCount<0:
                 raise unpackingError("markerCount={}".format(markerCount))
 
-            markerCountRange = range( 0, markerCount )
+            markerCountRange = range( markerCount )
             trace( "\tMarker Count:", markerCount )
 
             # Marker positions
+            markerPos = []
             for i in markerCountRange:
                 pos = Vector3.unpack( data[offset:offset+12] )
+                markerPos.append(pos)
                 offset += 12
                 trace( "\tMarker", i, ":", pos[0],",", pos[1],",", pos[2] )
-
+            
+            markerId = []
             if( self.__natNetStreamVersion[0] >= 2 ):
                 # Marker ID's
                 for i in markerCountRange:
                     id = from_bytes( data[offset:offset+4], byteorder='little' )
+                    markerId.append(id)
                     offset += 4
                     trace( "\tMarker ID", i, ":", id )
 
@@ -235,7 +239,8 @@ class NatNetClient(object):
 
         # Save to buffer
         if trackingValid:
-            self.rigidBodyListener_buffer[RBid] = RBpos, RBrot
+            if self.rigidBodyListener:
+                self.rigidBodyListener_buffer[RBid] = RBpos, RBrot, markerPos, markerID
 
         return offset
 
@@ -252,7 +257,7 @@ class NatNetClient(object):
             raise unpackingError("rigidBodyCount={}".format(rigidBodyCount))
         offset += 4
         trace( "Rigid Body Count:", rigidBodyCount )
-        for j in range( 0, rigidBodyCount ):
+        for j in range( rigidBodyCount ):
             offset += self.__unpackRigidBody( data[offset:] )
 
         return offset
@@ -276,7 +281,7 @@ class NatNetClient(object):
         offset += 4
         trace( "Marker Set Count:", markerSetCount )
 
-        for i in range( 0, markerSetCount ):
+        for i in range( markerSetCount ):
             # Model name
             modelName, separator, remainder = bytes(data[offset:]).partition( b'\0' )
             offset += len( modelName ) + 1
@@ -289,7 +294,7 @@ class NatNetClient(object):
             offset += 4
             trace( "Marker Count:", markerCount )
 
-            for j in range( 0, markerCount ):
+            for j in range( markerCount ):
                 pos = Vector3.unpack( data[offset:offset+12] )
                 offset += 12
                 trace( "\tMarker", j, ":", pos[0],",", pos[1],",", pos[2] )
@@ -301,7 +306,7 @@ class NatNetClient(object):
         offset += 4
         trace( "Unlabeled Markers Count:", unlabeledMarkersCount )
 
-        for i in range( 0, unlabeledMarkersCount ):
+        for i in range( unlabeledMarkersCount ):
             pos = Vector3.unpack( data[offset:offset+12] )
             offset += 12
             trace( "\tMarker", i, ":", pos[0],",", pos[1],",", pos[2] )
@@ -313,10 +318,10 @@ class NatNetClient(object):
         if rigidBodyCount>MAX_RIGIDBODYCOUNT or rigidBodyCount<0:
             raise unpackingError("rigidBodyCount={}".format(rigidBodyCount))
          
-        if rigidBodyCount>0:
+        if rigidBodyCount>0 and self.rigidBodyListener:
             self.rigidBodyListener_buffer = {}
 
-        for i in range( 0, rigidBodyCount ):
+        for i in range( rigidBodyCount ):
             offset += self.__unpackRigidBody( data[offset:] )
         
         # Version 2.1 and later
@@ -327,7 +332,7 @@ class NatNetClient(object):
                 raise unpackingError("skeletonCount={}".format(skeletonCount))
             offset += 4
             trace( "Skeleton Count:", skeletonCount )
-            for i in range( 0, skeletonCount ):
+            for i in range( skeletonCount ):
                 offset += self.__unpackSkeleton( data[offset:] )
 
         # Labeled markers (Version 2.3 and later)
@@ -338,7 +343,7 @@ class NatNetClient(object):
                 raise unpackingError("labeledMarkerCount={}".format(labeledMarkerCount))
             offset += 4
             trace( "Labeled Marker Count:", labeledMarkerCount )
-            for i in range( 0, labeledMarkerCount ):
+            for i in range( labeledMarkerCount ):
                 id = from_bytes( data[offset:offset+4], byteorder='little' )
                 offset += 4
                 pos = Vector3.unpack( data[offset:offset+12] )
@@ -367,7 +372,7 @@ class NatNetClient(object):
                 raise unpackingError("forcePlateCount={}".format(forcePlateCount))
             offset += 4
             trace( "Force Plate Count:", forcePlateCount )
-            for i in range( 0, forcePlateCount ):
+            for i in range( forcePlateCount ):
                 # ID
                 forcePlateID = from_bytes( data[offset:offset+4], byteorder='little' )
                 offset += 4
@@ -380,13 +385,13 @@ class NatNetClient(object):
                 offset += 4
 
                 # Channel Data
-                for j in range( 0, forcePlateChannelCount ):
+                for j in range( forcePlateChannelCount ):
                     trace( "\tChannel", j, ":", forcePlateID )
                     forcePlateChannelFrameCount = from_bytes( data[offset:offset+4], byteorder='little' )
                     if forcePlateChannelFrameCount>MAX_FORCEPLATECHANNELFRAMECOUNT or forcePlateChannelFrameCount<0:
                         raise unpackingError("forcePlateChannelFrameCount={}".format(forcePlateChannelFrameCount))
                     offset += 4
-                    for k in range( 0, forcePlateChannelFrameCount ):
+                    for k in range( forcePlateChannelFrameCount ):
                         forcePlateChannelVal = from_bytes( data[offset:offset+4], byteorder='little' )
                         offset += 4
                         trace( "\t\t", forcePlateChannelVal )
@@ -398,7 +403,7 @@ class NatNetClient(object):
                 raise unpackingError("deviceCount={}".format(deviceCount))
             offset += 4
             trace( "Device Count:", deviceCount )
-            for i in range( 0, deviceCount ):
+            for i in range( deviceCount ):
                 # ID
                 deviceID = from_bytes( data[offset:offset+4], byteorder='little' )
                 offset += 4
@@ -410,13 +415,13 @@ class NatNetClient(object):
                     raise unpackingError("deviceChannelCount={}".format(deviceChannelCount))
                 offset += 4
                 # Channel Data
-                for j in range( 0, deviceChannelCount ):
+                for j in range( deviceChannelCount ):
                     trace( "\tChannel", j, ":", deviceID )
                     deviceChannelFrameCount = from_bytes( data[offset:offset+4], byteorder='little' )
                     if deviceChannelFrameCount>MAX_DEVICECHANNELFRAMECOUNT or deviceChannelFrameCount<0:
                         raise unpackingError("deviceChannelFrameCount={}".format(deviceChannelFrameCount))
                     offset += 4
-                    for k in range( 0, deviceChannelFrameCount ):
+                    for k in range( deviceChannelFrameCount ):
                         deviceChannelVal = from_bytes( data[offset:offset+4], byteorder='little' )
                         offset += 4
                         trace( "\t\t", deviceChannelVal )
@@ -464,16 +469,17 @@ class NatNetClient(object):
             self.newFrameListener( frameNumber, markerSetCount, unlabeledMarkersCount, rigidBodyCount, skeletonCount,
                                   labeledMarkerCount, timecode, timecodeSub, timestamp, isRecording, trackedModelsChanged )
 
-        if (self.rigidBodyListener is not None):
+        if self.rigidBodyListener:
             for RBid in self.rigidBodyListener_buffer:
                 self.rigidBodyListener(timestamp, RBid, 
                                                   self.rigidBodyListener_buffer[RBid][0], 
                                                   self.rigidBodyListener_buffer[RBid][1], 
-                                                  self.rigidBodyDescriptor)
+                                                  self.rigidBodyDescriptor,
+                                                  self.rigidBodyListener_buffer[RBid][2], #markerPos
+                                                  self.rigidBodyListener_buffer[RBid][3]) #markerId
                 trace("Sending info from RBid {} to rigidBodyListener".format(RBid))
 
     # Unpack a marker set description packet
-
     def __unpackMarkerSetDescription(self, data):
         offset=0
 
@@ -518,7 +524,7 @@ class NatNetClient(object):
             offset += 4
             trace( "\tRigidBody Marker Count:", markerCount )
 
-            markerCountRange = range( 0, markerCount )
+            markerCountRange = range( markerCount )
             for marker in markerCountRange:
                 markerOffset = Vector3.unpack(data[offset:offset+12])
                 offset +=12
@@ -545,7 +551,7 @@ class NatNetClient(object):
         rigidBodyCount = from_bytes( data[offset:offset+4], byteorder='little' )
         offset += 4
 
-        for i in range( 0, rigidBodyCount ):
+        for i in range( rigidBodyCount ):
             offset += self.__unpackRigidBodyDescription( data[offset:] )
 
         return offset
@@ -751,12 +757,16 @@ if __name__ == '__main__':
         data = []
 
     # This is a callback function that gets connected to the NatNet client. It is called once per rigid body per frame
-    def receiveRigidBodyFrame(timestamp, id, position, rotation, rigidBodyDescriptor):
+    def receiveRigidBodyFrame(timestamp, id, position, rotation, rigidBodyDescriptor, 
+                              markerPos, markerId):
         if rigidBodyDescriptor:
             if rigidbodyname and (rigidbodyname in rigidBodyDescriptor):
                 if id == rigidBodyDescriptor[rigidbodyname][0]:
                     print("[{}] Received frame for rigid body {}:\n id: {} \n position: {}\n quaternion: {}\n rpy: {}".format(rigidbodyname,
                         timestamp, id, position, rotation, from_quaternion2rpy(rotation)))
+                    if markerId:
+                        for m_id, m_pos in zip(markerId, markerPos):
+                            print("Marker id: {}, pos:{}".format(m_id, m_pos))
                     if record2file and rigidbodyname:
                         data.append([timestamp, id, position, rotation, from_quaternion2rpy(rotation)])
 

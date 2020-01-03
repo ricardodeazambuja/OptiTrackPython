@@ -35,12 +35,17 @@ class TestNatNetClient(object):
                                                                                                       key,
                                                                                                       self.optitrack_reading[key][1],
                                                                                                       self.optitrack_reading[key][2]))
+                    if self.optitrack_reading[key][3]:
+                        for m_id, m_pos in zip(self.optitrack_reading[key][3], 
+                                               self.optitrack_reading[key][4]):
+                            print("Marker id: {}, pos:{}".format(m_id, m_pos))
                 time.sleep(0.005)
             except KeyboardInterrupt:
                 self.streamingClient.is_alive = False
                 break
 
-    def receiveRigidBodyFrame(self, timestamp, id, position, rotation, rigidBodyDescriptor):
+    def receiveRigidBodyFrame(self, timestamp, id, position, rotation, rigidBodyDescriptor,
+                                    markerPos, markerId):
         if rigidBodyDescriptor:
             for rbname in self.rigidbody_names2track:
                 if rbname in rigidBodyDescriptor:
@@ -51,7 +56,9 @@ class TestNatNetClient(object):
                                 # rotation is a quaternion!
                                 self.optitrack_reading[rbname] = [timestamp,
                                                                   position,
-                                                                  rotation]
+                                                                  rotation,
+                                                                  markerId,
+                                                                  markerPos]
                             finally:
                                 self.lock_opti.release()
 
