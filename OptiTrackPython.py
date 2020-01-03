@@ -115,7 +115,6 @@ class NatNetClient(object):
         self.rigidBodyListener_buffer = {}
 
         self.newFrameListener = None
-        self.newFrameListener_buffer = {}
 
         # Indicates nothing was received yet (or no rigid bodies available)
         self.rigidBodyDescriptor = None
