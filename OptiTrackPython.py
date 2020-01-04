@@ -281,6 +281,7 @@ class NatNetClient(object):
         offset += 4
         trace( "Marker Set Count:", markerSetCount )
 
+        markerSets = []
         for i in range( markerSetCount ):
             # Model name
             modelName, separator, remainder = bytes(data[offset:]).partition( b'\0' )
@@ -294,10 +295,13 @@ class NatNetClient(object):
             offset += 4
             trace( "Marker Count:", markerCount )
 
+            markerPos = []
             for j in range( markerCount ):
                 pos = Vector3.unpack( data[offset:offset+12] )
                 offset += 12
                 trace( "\tMarker", j, ":", pos[0],",", pos[1],",", pos[2] )
+                markerPos.append(pos)
+            markerSets.append(markerPos)
                          
         # Unlabeled markers count (4 bytes)
         unlabeledMarkersCount = from_bytes( data[offset:offset+4], byteorder='little' )
@@ -467,7 +471,8 @@ class NatNetClient(object):
         # Send information to any listener.
         if self.newFrameListener is not None:
             self.newFrameListener( frameNumber, markerSetCount, unlabeledMarkersCount, rigidBodyCount, skeletonCount,
-                                  labeledMarkerCount, timecode, timecodeSub, timestamp, isRecording, trackedModelsChanged )
+                                  labeledMarkerCount, timecode, timecodeSub, timestamp, isRecording, trackedModelsChanged,
+                                  markerSets )
 
         if self.rigidBodyListener:
             for RBid in self.rigidBodyListener_buffer:
