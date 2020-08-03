@@ -31,10 +31,11 @@ class TestNatNetClient(object):
         while True:
             try:
                 for key in self.optitrack_reading:
-                    print("{} Received frame for rigid body {}:\n position: {}\n rotation: {}".format(self.optitrack_reading[key][0],
-                                                                                                      key,
-                                                                                                      self.optitrack_reading[key][1],
-                                                                                                      self.optitrack_reading[key][2]))
+                    with self.lock_opti:
+                        print("{} Received frame for rigid body {}:\n position: {}\n rotation: {}".format(self.optitrack_reading[key][0],
+                                                                                                          key,
+                                                                                                          self.optitrack_reading[key][1],
+                                                                                                          self.optitrack_reading[key][2]))
                 time.sleep(0.005)
             except KeyboardInterrupt:
                 self.streamingClient.is_alive = False
