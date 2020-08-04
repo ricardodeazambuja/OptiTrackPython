@@ -21,6 +21,7 @@
 import sys
 import socket
 import struct
+import traceback
 from threading import Thread
 import numpy as np
 import time
@@ -602,6 +603,11 @@ class NatNetClient(object):
             except socket.timeout:
                 trace('NatNetClient socket timemout!')
                 continue
+            # There's no proper error correction during reception
+            # so this will avoid crashing because of one bad packet
+            except struct.error:
+                trace('NatNetClient struct error: %s' % traceback.format_exc())
+                continue
         try:
             socketd.setsockopt(socket.SOL_IP, 
                                socket.IP_DROP_MEMBERSHIP, 
@@ -717,6 +723,10 @@ class NatNetClient(object):
         self.__sendCommand(self.NAT_DISCONNECT, "",
                            self.commandSocket, (self.server_address, self.command_port))
 
+        self.is_alive = False
+        self.dataThread.join()
+        self.commandThread.join()
+
 if __name__ == '__main__':
     import argparse
     import pickle
@@ -777,14 +787,12 @@ if __name__ == '__main__':
             try:
                 time.sleep(0.01)
             except KeyboardInterrupt:
-                streamingClient.is_alive=False
                 break
     except KeyboardInterrupt:
         pass
     finally:
         print("Closing the connection...")
-        streamingClient.close()
-        time.sleep(1)
+        streamingClient.close() # Don't forget to call close ;)
         print("Connection closed!")
         if record2file and rigidbodyname:
             filename = "{}.pickle".format(rigidbodyname)
@@ -794,5 +802,5 @@ if __name__ == '__main__':
             print("To read the data, use: data = pickle.load(open('{}', 'rb'))".format(filename))
     
     # To read the data:
-    # with open("CogniFly.pickle", 'rb') as f: 
-    #     data = pickle.load(open("CogniFly.pickle", 'rb')) 
+    # with open("your_filename.pickle", 'rb') as f: 
+    #     data = pickle.load(open("your_filename.pickle", 'rb')) 
